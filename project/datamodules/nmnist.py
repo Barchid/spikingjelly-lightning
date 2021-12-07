@@ -4,6 +4,7 @@ from torch.functional import split
 from torch.utils import data
 from torch.utils.data import random_split, DataLoader
 from spikingjelly.datasets.n_mnist import NMNIST
+import os
 
 
 class NMNISTDataModule(pl.LightningDataModule):
@@ -12,6 +13,9 @@ class NMNISTDataModule(pl.LightningDataModule):
         self.timesteps = timesteps
         self.batch_size = batch_size
         self.data_dir = data_dir
+
+        # create the directory if not exist
+        os.makedirs(data_dir, exists_ok=True)
 
     def prepare_data(self) -> None:
         # downloads the dataset if it does not exist
