@@ -7,7 +7,7 @@ from spikingjelly.datasets.n_mnist import NMNIST
 
 
 class NMNISTDataModule(pl.LightningDataModule):
-    def __init__(self, timesteps: int, batch_size: int, data_dir: str = "data/nmnist"):
+    def __init__(self, timesteps: int, batch_size: int, data_dir: str = "data/nmnist", **kwargs):
         super().__init__()
         self.timesteps = timesteps
         self.batch_size = batch_size
