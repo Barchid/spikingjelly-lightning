@@ -32,13 +32,8 @@ class NMNISTDataModule(pl.LightningDataModule):
         tonic.datasets.NMNIST(save_to=self.data_dir, train=False)
 
     def setup(self, stage: Optional[str] = None) -> None:
-        # Assign train/val datasets for use in dataloaders
-        if stage == "fit" or stage is None:
-            self.train_set = tonic.datasets.NMNIST(save_to=self.data_dir, train=True, transform=self.transform)
-
-        # Assign test dataset for use in dataloader(s)
-        if stage == "test" or stage == "validate" or stage is None:
-            self.val_set = tonic.datasets.NMNIST(save_to=self.data_dir, train=False, transform=self.transform)
+        self.train_set = tonic.datasets.NMNIST(save_to=self.data_dir, train=True, transform=self.transform)
+        self.val_set = tonic.datasets.NMNIST(save_to=self.data_dir, train=False, transform=self.transform)
 
     def train_dataloader(self):
         return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True)
