@@ -10,7 +10,7 @@ import torchmetrics
 from project.models.spiking_lenet5 import SpikingLeNet5
 
 
-class Module(pl.LightningModule):
+class Lenet5Module(pl.LightningModule):
     def __init__(self, learning_rate: float, neuron_model: str, bias: bool, **kwargs):
         super().__init__()
         self.save_hyperparameters()
