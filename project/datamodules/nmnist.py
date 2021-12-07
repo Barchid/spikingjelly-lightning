@@ -3,8 +3,10 @@ import pytorch_lightning as pl
 from torch.functional import split
 from torch.utils import data
 from torch.utils.data import random_split, DataLoader
-from spikingjelly.datasets.n_mnist import NMNIST
+import tonic
+from torchvision import transforms
 import os
+import numpy as np
 
 
 class NMNISTDataModule(pl.LightningDataModule):
@@ -17,22 +19,26 @@ class NMNISTDataModule(pl.LightningDataModule):
         # create the directory if not exist
         os.makedirs(data_dir, exist_ok=True)
 
+        # use a to_frame transform
+        sensor_size = tonic.datasets.NMNIST.sensor_size
+        frame_transform = tonic.transforms.ToFrame(sensor_size=sensor_size, n_time_bins=self.timesteps)
+        self.transform = transforms.Compose(
+            [frame_transform, transforms.Lambda(lambda x: (x > 0).astype(np.float32))])
+
     def prepare_data(self) -> None:
         # downloads the dataset if it does not exist
-        # NOTE: since we use spikingjelly, all the download process is handled, we just have to make an instanciation
-        NMNIST(self.data_dir, train=True, data_type='frame', frames_number=self.timesteps, split_by="number")
-        NMNIST(self.data_dir, train=False, data_type='frame', frames_number=self.timesteps, split_by="number")
+        # NOTE: since we use the library named "Tonic", all the download process is handled, we just have to make an instanciation
+        tonic.datasets.NMNIST(save_to=self.data_dir, train=True)
+        tonic.datasets.NMNIST(save_to=self.data_dir, train=False)
 
     def setup(self, stage: Optional[str] = None) -> None:
         # Assign train/val datasets for use in dataloaders
         if stage == "fit" or stage is None:
-            self.train_set = NMNIST(self.data_dir, train=True, data_type='frame',
-                                    frames_number=self.timesteps, split_by="number")
+            self.train_set = tonic.datasets.NMNIST(save_to=self.data_dir, train=True, transform=self.transform)
 
         # Assign test dataset for use in dataloader(s)
-        if stage == "test" or stage is None:
-            self.val_set = NMNIST(self.data_dir, train=False, data_type='frame',
-                                  frames_number=self.timesteps, split_by="number")
+        if stage == "test" or stage == "validate" or stage is None:
+            self.val_set = tonic.datasets.NMNIST(save_to=self.data_dir, train=False, transform=self.transform)
 
     def train_dataloader(self):
         return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True)
@@ -42,6 +48,3 @@ class NMNISTDataModule(pl.LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader(self.val_set, batch_size=self.batch_size, shuffle=False)
-
-    def predict_dataloader(self):
-        return DataLoader(self.mnist_predict, batch_size=self.batch_size, shuffle=False)
