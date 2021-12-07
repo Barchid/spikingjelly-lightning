@@ -21,7 +21,7 @@ class SpikingLeNet5(nn.Module):
         self.flat = nn.Flatten(start_dim=2)
 
         self.fc1 = LinearSpike(
-            in_channels=height // 4 * width // 4 * 50,
+            in_channels= (height // 4) * (width // 4) * 50,
             out_channels=120,
             bias=bias,
             neuron_model=neuron_model
@@ -45,8 +45,6 @@ class SpikingLeNet5(nn.Module):
         x = self.stride2(x)
         x = self.flat(x)
         
-        print(x.shape)
-    
         x = self.fc1(x)
 
         # .mean(0) is used to convert the Spiking Feature Maps (dim=[T, B, C]) to numerical values (dim=[B, C])
