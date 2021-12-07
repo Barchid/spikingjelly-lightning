@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from base_layers import ConvBnSpike, ConvSpike, LinearSpike
+from .base_layers import ConvBnSpike, ConvSpike, LinearSpike
 from spikingjelly.clock_driven import surrogate, neuron, functional, layer
 
 
