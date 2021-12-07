@@ -31,13 +31,13 @@ class NMNISTDataModule(pl.LightningDataModule):
                                   frames_number=self.timesteps, split_by="number")
 
     def train_dataloader(self):
-        return DataLoader(self.train_set, batch_size=self.batch_size)
+        return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True)
 
     def val_dataloader(self):
-        return DataLoader(self.val_set, batch_size=self.batch_size)
+        return DataLoader(self.val_set, batch_size=self.batch_size, shuffle=False)
 
     def test_dataloader(self):
-        return DataLoader(self.val_set, batch_size=self.batch_size)
+        return DataLoader(self.val_set, batch_size=self.batch_size, shuffle=False)
 
     def predict_dataloader(self):
-        return DataLoader(self.mnist_predict, batch_size=self.batch_size)
+        return DataLoader(self.mnist_predict, batch_size=self.batch_size, shuffle=False)
