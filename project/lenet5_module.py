@@ -4,6 +4,8 @@ from spikingjelly.datasets.n_mnist import NMNIST
 import torch
 import pytorch_lightning as pl
 from torch.nn import functional as F
+from spikingjelly.clock_driven import functional
+import torchmetrics
 
 from project.models.spiking_lenet5 import SpikingLeNet5
 
@@ -23,28 +25,42 @@ class Module(pl.LightningModule):
         )
 
     def forward(self, x):
-        x = x.view(x.size(0), -1)
-        x = torch.relu(self.l1(x))
-        x = torch.relu(self.l2(x))
+        # IMPORTANT: always apply reset_net before a new forward
+        functional.reset_net(self.model)
+
+        # (T, B, C, H, W) --> (B, num_classes)
+        x = self.model(x)
+
         return x
 
     def training_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self(x)
         loss = F.cross_entropy(y_hat, y)
+        acc = torchmetrics.functional.accuracy(y_hat.clone().detach(), y)
+
+        self.log('train_loss', loss, on_epoch=True, prog_bar=False)
+        self.log('train_acc', acc, on_epoch=True, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self(x)
         loss = F.cross_entropy(y_hat, y)
-        self.log('valid_loss', loss)
+        acc = torchmetrics.functional.accuracy(y_hat.clone().detach(), y)
+
+        # logs
+        self.log('val_loss', loss, on_epoch=True, prog_bar=True)
+        self.log('val_acc', acc, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self(x)
         loss = F.cross_entropy(y_hat, y)
-        self.log('test_loss', loss)
+        acc = torchmetrics.functional.accuracy(y_hat.clone().detach(), y)
+
+        self.log('test_loss', loss, on_epoch=True, prog_bar=True)
+        self.log('test_acc', acc, on_epoch=True, prog_bar=True)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
