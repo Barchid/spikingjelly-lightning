@@ -47,7 +47,7 @@ class SpikingLeNet5(nn.Module):
         x = self.fc1(x)
 
         # .mean(0) is used to convert the Spiking Feature Maps (dim=[T, B, C]) to numerical values (dim=[B, C])
-        # so that we can handle
+        # so that we can obtain some prediction
         x = x.mean(0)
 
         x = self.fc_final(x)
