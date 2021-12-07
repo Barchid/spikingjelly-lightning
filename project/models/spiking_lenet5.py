@@ -44,6 +44,9 @@ class SpikingLeNet5(nn.Module):
         x = self.conv2(x)
         x = self.stride2(x)
         x = self.flat(x)
+        
+        print(x.shape)
+    
         x = self.fc1(x)
 
         # .mean(0) is used to convert the Spiking Feature Maps (dim=[T, B, C]) to numerical values (dim=[B, C])
