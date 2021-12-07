@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from os import times
 from spikingjelly.datasets.n_mnist import NMNIST
 
 import torch
@@ -11,9 +12,9 @@ from project.models.spiking_lenet5 import SpikingLeNet5
 
 
 class Lenet5Module(pl.LightningModule):
-    def __init__(self, learning_rate: float, neuron_model: str, bias: bool, **kwargs):
+    def __init__(self, learning_rate: float, neuron_model: str, bias: bool, timesteps: int, **kwargs):
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["timesteps"])
 
         self.model = SpikingLeNet5(
             in_channels=2,
@@ -25,6 +26,9 @@ class Lenet5Module(pl.LightningModule):
         )
 
     def forward(self, x):
+        # Reshapes the input tensor from (B, T, C, H, W) to (T, B, C, H, W). Specific to the dataset used
+        x = x.permute(1, 0, 2, 3, 4)
+
         # IMPORTANT: always apply reset_net before a new forward
         functional.reset_net(self.model)
 
