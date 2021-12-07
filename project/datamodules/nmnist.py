@@ -15,7 +15,7 @@ class NMNISTDataModule(pl.LightningDataModule):
         self.data_dir = data_dir
 
         # create the directory if not exist
-        os.makedirs(data_dir, exists_ok=True)
+        os.makedirs(data_dir, exist_ok=True)
 
     def prepare_data(self) -> None:
         # downloads the dataset if it does not exist
