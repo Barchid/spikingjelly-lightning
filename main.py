@@ -35,7 +35,11 @@ def main():
         # here, we put the model's hyperparameters and the resulting val accuracy
         report.write(
             f"SpikingLeNet5 {args.timesteps} {args.bias} {args.neuron_model} {args.learning_rate}  {trainer.checkpoint_callback.best_model_score}\n")
-
+    elif args.mode == "lr_find":
+        lr_finder = trainer.tuner.lr_find(module)
+        fig = lr_finder.plot(suggest=True)
+        fig.show()
+        print(f'SUGGESTION IS :', lr_finder.suggestion())
     else:
         trainer.validate(module, datamodule=datamodule, ckpt_path=args.ckpt_path)
 
@@ -78,7 +82,7 @@ def get_args():
     # Program args
     # TODO: you can add program-specific arguments here
     parser = ArgumentParser()
-    parser.add_argument('--mode', type=str, choices=["train", "validate"], default="train")
+    parser.add_argument('--mode', type=str, choices=["train", "validate", "lr_find"], default="train")
     parser.add_argument('--ckpt_path', type=str, default=None,
                         help="Path of a checkpoint file. Defaults to None, meaning the training/testing will start from scratch.")
     parser.add_argument('--batch_size', type=int, default=32)
