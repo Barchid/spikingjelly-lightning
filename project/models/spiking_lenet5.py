@@ -27,7 +27,7 @@ class SpikingLeNet5(nn.Module):
             neuron_model=neuron_model
         )
 
-        self.fc_final = LinearSpike(120, num_classes, bias=bias, neuron_model=neuron_model)
+        self.fc_final = nn.Linear(120, num_classes, bias=True)
 
     def forward(self, x):
         """
