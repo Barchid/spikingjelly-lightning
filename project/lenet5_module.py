@@ -19,8 +19,6 @@ class Lenet5Module(pl.LightningModule):
         self.model = SpikingLeNet5(
             in_channels=2,
             num_classes=10,
-            height=NMNIST.get_H_W()[0],
-            width=NMNIST.get_H_W()[1],
             neuron_model=self.hparams.neuron_model,
             bias=self.hparams.bias
         )
