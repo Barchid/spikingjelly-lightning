@@ -36,7 +36,7 @@ def main():
         report.write(
             f"SpikingLeNet5 {args.timesteps} {args.bias} {args.neuron_model} {args.learning_rate}  {trainer.checkpoint_callback.best_model_score}\n")
     elif args.mode == "lr_find":
-        lr_finder = trainer.tuner.lr_find(module)
+        lr_finder = trainer.tuner.lr_find(module, datamodule=datamodule)
         fig = lr_finder.plot(suggest=True)
         fig.show()
         print(f'SUGGESTION IS :', lr_finder.suggestion())
