@@ -26,7 +26,7 @@ class Lenet5Module(pl.LightningModule):
         )
 
     def forward(self, x):
-        # Reshapes the input tensor from (B, T, C, H, W) to (T, B, C, H, W). Specific to the dataset used
+        # Reshapes the input tensor from (B, T, C, H, W) to (T, B, C, H, W).
         x = x.permute(1, 0, 2, 3, 4)
 
         # IMPORTANT: always apply reset_net before a new forward
