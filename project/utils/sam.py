@@ -142,7 +142,7 @@ def show_cam_on_image(img: np.ndarray,
     if img.shape[-1] == 1:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
     elif img.shape[-1] == 2:
-        img = np.stack(img[:, :, 0], img[:, :, 1], np.zeros_like(img[:, :, 0]), axis=2)
+        img = np.stack((img[:, :, 0], img[:, :, 1], np.zeros_like(img[:, :, 0])), axis=2)
 
     cam = heatmap + img
     cam = cam / np.max(cam)
