@@ -11,12 +11,13 @@ from spikingjelly.clock_driven import neuron
 import math
 import matplotlib.pyplot as plt
 from celluloid import Camera
+import uuid
 
 
 class SAM(object):
     """Computes the Spiking activation map (SAM) for one layer"""
 
-    def __init__(self, layer, name: str, input_height: int, input_width: int, gamma=0.4):
+    def __init__(self, layer, name: str, gamma=0.4):
         """[summary]
 
         Args:
@@ -30,17 +31,31 @@ class SAM(object):
         self.name = name
         self.hook = layer.register_forward_hook(self.hook_save_spikes)
         self.gamma = gamma
-        self.height = input_height
-        self.width = input_width
-
         self.spikes = None
 
     def hook_save_spikes(self, module, input, output):
         self.spikes = output.detach().cpu().numpy()
 
-    def get_sam(self):
-        # checks if the spikes are
+    def get_sam(self, input: torch.Tensor):
+        """Gets the Spiking Activation Map for the input in parameters.
+
+        Args:
+            input (torch.Tensor): input tensor.Shapes can be (T, B, C, H, W) for an input spike train or (B, C, H, W) for an input static image
+
+        Returns:
+            [type]: [description]
+        """
         assert self.spikes is not None
+        assert len(input.shape) == 4 or len(input.shape) == 5  # input must be (B, C, H, W) or (T, B, C, H, W)
+
+        # get height and width of original input images
+        height = input.shape[-2]
+        width = input.shape[-1]
+
+        # preprocess input
+        input = input.detach().cpu().numpy()
+        if len(input.shape) == 4:
+            input = [input] * self.spikes.shape[0]
 
         # Compute the SAM for each layer and each timesteps
         heatmaps = []
@@ -55,15 +70,17 @@ class SAM(object):
                 NCS[mask] += math.exp(-self.gamma * abs(t - t_p))
 
             M = np.sum(NCS * self.spikes[t], axis=1)
-            heatmap = self._format_heatmap(M)
+            heatmap = self._format_heatmap(M, height, width)
             heatmaps.append(heatmap)
+
+        self.heatmap_video(input, heatmaps)
 
         # Resets the spikes record for another forward pass
         self.spikes = None
 
         return heatmaps
 
-    def _format_heatmap(self, M: np.ndarray):
+    def _format_heatmap(self, M: np.ndarray, height: int, width: int):
         batch = []
 
         # for each heatmap in the batch
@@ -75,29 +92,27 @@ class SAM(object):
             heatmap = (M[i] - min) / (max - min + 1e-7)
 
             # resize the heatmap
-            heatmap = cv2.resize(heatmap, (self.width, self.height))
+            heatmap = cv2.resize(heatmap, (width, height))
 
             batch.append(heatmap)
 
         return np.array(batch)
 
+    def heatmap_video(self, input: List[np.ndarray], heatmaps: List[np.ndarray]):
+        for j in range(len(heatmaps[0])):  # FOR EACH input IN BATCH
+            fig, ax = plt.subplots()
+            camera = Camera(fig)
+            plt.axis("off")
+            for i in range(len(heatmaps)):  # FOR EACH timestep
+                # input[i+1] because the heatmaps list doesn't take the timestep=0 into account
+                img_heatmap = show_cam_on_image(input[i + 1][j].transpose(1, 2, 0),
+                                                heatmaps[i][j], use_rgb=input.shape[2] == 3)
 
-def heatmap_video(original_image: np.ndarray, heatmaps: List[np.ndarray], filename: str):
-    fig, ax = plt.subplots()
-    camera = Camera(fig)
-    plt.axis("off")
-
-    for heatmap in heatmaps:
-        img_heatmap = show_cam_on_image(original_image, heatmap, use_rgb=True)
-
-        # plt.imsave('test.png', img_heatmap)
-        # plt.show()
-
-        ax.imshow(img_heatmap)
-        camera.snap()
-
-    anim = camera.animate(interval=40)
-    anim.save(filename)
+                ax.imshow(img_heatmap)
+                camera.snap()
+            filename = f"batch{j}_{str(uuid.uuid4())}.mp4"
+            anim = camera.animate(interval=40)
+            anim.save(filename)
 
 
 def show_cam_on_image(img: np.ndarray,
@@ -120,11 +135,12 @@ def show_cam_on_image(img: np.ndarray,
     heatmap = np.float32(heatmap) / 255
 
     if np.max(img) > 1:
-        raise Exception(
-            "The input image should np.float32 in the range [0, 1]")
+        print(np.unique(img))
+        raise Exception("The input image should np.float32 in the range [0, 1]")
 
     img = np.squeeze(img)  # squeeze if needed
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    if img.shape[-1] == 1:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
 
     cam = heatmap + img
     cam = cam / np.max(cam)
