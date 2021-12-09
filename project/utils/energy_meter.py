@@ -39,11 +39,7 @@ class EnergyMeter(object):
     def hook_save_spikes(self, module, input, output):
         spikes = output.detach().cpu().numpy()
         self.neuron_number = spikes.size
-        if self.neuron_number is None:
-            self.neuron_number = spikes.size
-            self.spike_count = np.count_nonzero(spikes)
-        else:
-            self.spike_count = self.spike_count + np.count_nonzero(spikes)
+        self.spike_count = np.count_nonzero(spikes)
 
     def get_energy(self):
         spike_rate = self.spike_count / self.neuron_number
